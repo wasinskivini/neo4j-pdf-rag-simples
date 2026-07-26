@@ -60,8 +60,9 @@ try {
         // "Como converter objetos JavaScript em tensores?",
         // "O que é normalização de dados e por que é necessária?",
         // "Como funciona uma rede neural no TensorFlow.js?",
-        "O que significa treinar uma rede neural?",
+        // "O que significa treinar uma rede neural?",
         // "o que é hot enconding e quando usar?"
+        "oque e um Componente standalone"
     ]
 
     for (const question of questions) {

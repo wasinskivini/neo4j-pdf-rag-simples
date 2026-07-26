@@ -27,7 +27,8 @@ export const CONFIG = Object.freeze({
         }
     },
     pdf: {
-        path: "./tensores.pdf",
+        // path: "./tensores.pdf",
+        path: "./angular-19.pdf"
     },
     textSplitter: {
         // define aproximadamente o tamanho de cada pedaço.
