@@ -2,14 +2,14 @@ version: '3.8'
 
 services:
   neo4j:
-    image: neo4j:5.14.0-community
-    container_name: neo4j
-    restart: unless-stopped
+    image: neo4j:5.14.0-community #aqui é a imagem oficial do Neo4j, que contém o banco de dados e suas dependências.
+    container_name: neo4j #aqui é o nome do contêiner, que será usado para identificar e gerenciar o contêiner do Neo4j.
+    restart: unless-stopped #aqui é a política de reinício do contêiner, que garante que ele seja reiniciado automaticamente em caso de falha, a menos que seja explicitamente parado.
     volumes:
-      - ./neo4j/data:/data
-      - ./neo4j/logs:/logs
-      - ./neo4j/plugins:/plugins
-      - ./import:/var/lib/neo4j/import
+      - ./neo4j/data:/data #isso é para persistir os dados do banco de dados Neo4j, garantindo que eles não sejam perdidos quando o contêiner for reiniciado ou removido.
+      - ./neo4j/logs:/logs #aqui é para armazenar os logs do Neo4j, permitindo que você acesse e analise os registros de atividades e erros do banco de dados.
+      - ./neo4j/plugins:/plugins #isso é para adicionar plugins personalizados ao Neo4j, permitindo que você estenda a funcionalidade do banco de dados com recursos adicionais.  
+      - ./import:/var/lib/neo4j/import #aqui é para importar arquivos de dados para o Neo4j, facilitando a carga de dados externos no banco de dados.
     ports:
       - "7474:7474"  # Neo4j Browser
       - "7687:7687"  # Bolt Protocol (for queries)
