@@ -44,7 +44,14 @@ try {
         CONFIG.neo4j
     )
     //limpa todos os documentos existentes no banco de dados Neo4j antes de adicionar novos documentos
-    clearAll(_neo4jVectorStore, CONFIG.neo4j.nodeLabel)
+    // apaga os documentos
+    //         ↓
+    // espera terminar
+    //         ↓
+    // adiciona os documentos novos
+    //         ↓
+    // executa as pesquisas
+    await clearAll(_neo4jVectorStore, CONFIG.neo4j.nodeLabel)
 
     for (const [index, doc] of documents.entries()) {
         console.log(`✅ Adicionando documento ${index + 1}/${documents.length}`);
@@ -55,15 +62,32 @@ try {
 
     // ==================== STEP 2: RUN SIMILARITY SEARCH ====================
     console.log("🔍 ETAPA 2: Executando buscas por similaridade...\n");
+    //questions é um array de perguntas que serão usadas para buscar documentos relevantes no banco de dados Neo4j
+    // esse question é do pdf tensores.pdf, mas pode ser alterado para qualquer pergunta que você queira fazer sobre o conteúdo do PDF carregado.
+    // const questions = [
+    //     // "O que são tensores e como são representados em JavaScript?",
+    //     // "Como converter objetos JavaScript em tensores?",
+    //     // "O que é normalização de dados e por que é necessária?",
+    //     // "Como funciona uma rede neural no TensorFlow.js?",
+    //     // "O que significa treinar uma rede neural?",
+    //     // "o que é hot enconding e quando usar?"
+    //     "oque e um Componente standalone"
+    // ]
+
+    //QUESTIONS do ANGULAR-19.PDF
+    //COM BASE NESSAS PERGUNTAS AQUI, REFINEI O MINIMUM SCORE PARA 0.61, POIS COM 0.72 NÃO ESTAVA RETORNANDO NENHUM RESULTADO RELEVANTE.
+    // ASSIM FICA MAIS FACIL DE ENTENDER COMO ISSO FUNCIONA... IR REFINANDO AOS POUCOS E VENDO O QUE FUNCIONA MELHOR PARA CADA CASO.
     const questions = [
-        // "O que são tensores e como são representados em JavaScript?",
-        // "Como converter objetos JavaScript em tensores?",
-        // "O que é normalização de dados e por que é necessária?",
-        // "Como funciona uma rede neural no TensorFlow.js?",
-        // "O que significa treinar uma rede neural?",
-        // "o que é hot enconding e quando usar?"
-        "oque e um Componente standalone"
-    ]
+        // Devem encontrar conteúdo
+        "O que é um componente standalone?",
+        // "O roteamento permite trocar de página sem recarregar o site?",
+        // "Para que servem os signals?",
+
+        // Devem ser rejeitadas
+        // "Como preparar um bolo de chocolate?",
+        // "Quem ganhou a Copa do Mundo?",
+        // "Como treinar uma rede neural?"
+    ];
 
     for (const question of questions) {
         //aqui o console.log é usado para exibir a pergunta atual e separar visualmente as perguntas no console.
@@ -72,11 +96,50 @@ try {
         console.log(`📌 PERGUNTA: ${question}`);
         console.log('='.repeat(80));
 
-        const results = await _neo4jVectorStore.similaritySearch(
+        //aqui o método similaritySearchWithScore é chamado para buscar os documentos mais relevantes para a pergunta atual,
+        // retornando também o score de similaridade de cada documento encontrado.
+        const resultsWithScores = await _neo4jVectorStore.similaritySearchWithScore(
             question,
             CONFIG.similarity.topK
         )
-        displayResults(results)
+
+        console.log("\n📊 Resultados encontrados:");
+
+        //aqui o método forEach é usado para iterar sobre os resultados encontrados,
+        // exibindo o score e os primeiros 300 caracteres do conteúdo de cada documento.
+        // o score.toFixed(4) é usado para formatar o score com 4 casas decimais, tornando a exibição mais legível.
+        resultsWithScores.forEach(([document, score], index) => {
+            console.log(`\n${index + 1}. Score: ${score.toFixed(4)}`);
+            console.log(document.pageContent.slice(0, 300));
+        });
+
+        //aqui o método filter é usado para filtrar os resultados encontrados, 
+        // mantendo apenas aqueles que possuem um score maior ou igual ao valor mínimo definido.
+        //dentro do filter, o score de cada documento é comparado com o valor mínimo definido na constante MINIMUM_SCORE. 
+        // e o "_" é usado para ignorar o primeiro elemento do array (o documento em si), já que só precisamos do score para a filtragem.
+        const relevantResults = resultsWithScores.filter(([_, score]) => score >= CONFIG.similarity.minimumScore);
+        //aqui o método filter é usado para filtrar os resultados encontrados, 
+        // mantendo apenas aqueles que possuem um score maior ou igual ao valor mínimo definido.
+        if (relevantResults.length === 0) {
+            console.log("\n❌ Nenhum resultado relevante encontrado para a pergunta atual.");
+            continue;
+        }
+        
+        console.log(`\n✅ ${relevantResults.length} resultados relevantes encontrados para a pergunta atual.`);
+
+        //aqui o método map é usado para extrair apenas os documentos relevantes dos resultados filtrados, 
+        // descartando os scores.
+        // o "_" é usado para ignorar o segundo elemento do array (o score), já que só precisamos do documento em si.
+        const relevantesDocuments = relevantResults.map(([document, _]) => document);
+
+        displayResults(relevantesDocuments)
+
+        //aqui o método similaritySearch é chamado para buscar os documentos mais relevantes para a pergunta atual.
+        // const results = await _neo4jVectorStore.similaritySearch(
+        //     question,
+        //     CONFIG.similarity.topK
+        // )
+        // displayResults(results)
         // console.log(results)
     }
 

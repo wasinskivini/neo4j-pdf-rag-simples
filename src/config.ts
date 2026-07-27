@@ -46,5 +46,7 @@ export const CONFIG = Object.freeze({
         //isso significa que quando você fizer uma busca por similaridade, 
         // o sistema vai retornar os 3 documentos mais relevantes para a pergunta feita.
         topK: 3,
+        // minimumScore: 0.72, // Define a pontuação mínima de similaridade para considerar um documento relevante
+        minimumScore: 0.61, // Define a pontuação mínima de similaridade para considerar um documento relevante
     },
 });
